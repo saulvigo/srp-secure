@@ -1,0 +1,40 @@
+---
+- name: Instalar agente Zabbix en clientes
+  hosts: clientes
+  become: yes
+  vars:
+    server_ip: "192.168.1.20"
+  tasks:
+    - name: Descargar repositorio Zabbix
+      get_url:
+        url: https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.0+debian13_all.deb
+        dest: /tmp/zabbix-release.deb
+
+    - name: Instalar repositorio Zabbix
+      dpkg:
+        deb: /tmp/zabbix-release.deb
+
+    - name: Actualizar apt cache
+      apt:
+        update_cache: yes
+
+    - name: Instalar agente Zabbix
+      apt:
+        name: zabbix-agent2
+        state: present
+
+    - name: Configurar agente Zabbix
+      lineinfile:
+        path: /etc/zabbix/zabbix_agent2.conf
+        regexp: "^{{ item.key }}="
+        line: "{{ item.key }}={{ item.value }}"
+      loop:
+        - { key: "Server", value: "{{ server_ip }}" }
+        - { key: "ServerActive", value: "{{ server_ip }}" }
+        - { key: "Hostname", value: "{{ inventory_hostname }}" }
+
+    - name: Reiniciar agente Zabbix
+      systemd:
+        name: zabbix-agent2
+        state: restarted
+        enabled: yes

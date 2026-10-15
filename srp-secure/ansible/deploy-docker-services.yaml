@@ -1,0 +1,23 @@
+---
+- name: Desplegar servicios Docker
+  hosts: admin
+  become: yes
+  tasks:
+    - name: Crear directorio para docker-compose
+      file:
+        path: /home/saul/zabbix-docker
+        state: directory
+        owner: saul
+        group: saul
+
+    - name: Copiar archivo docker-compose.yml
+      copy:
+        src: /home/saul/srp-tools/docker-compose.yml
+        dest: /home/saul/zabbix-docker/docker-compose.yml
+        owner: saul
+        group: saul
+
+    - name: Levantar servicios con docker-compose
+      docker_compose:
+        project_src: /home/saul/zabbix-docker
+        state: present
